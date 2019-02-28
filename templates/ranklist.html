@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}用户榜{% endblock %}
+{% block head %}
+<header class="jumbotron subhead" id="header-base">
+    <div class="container">
+        <h1>用户榜</h1>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+            <form method="POST" role="form" class="form-horizontal" id="manageloan-form">
+                {% csrf_token %}
+                <div class="col-md-1">                    
+                </div>    
+                
+                <div class="col-md-5 form-group">
+                    <label class="col-md-3 control-label" for="id_borrower">查询用户：</label>
+                    <div class="col-md-7">
+                        <input class="form-control" type="search" id="id_borrower" name="who" placeholder="用户名" value="{{ who }}">
+                    </div>   
+                    <div class="col-md-2">
+                         <button class="btn btn-info form-group" type="submit" >搜索</button>   
+                    </div>                    
+                </div>
+            <form>     
+            <script language="javascript" type="text/javascript">
+                function cate(){
+                    var sel=$("#key option:selected");
+                    var s="{% url 'ranklist' %}";
+                    var p="{{ who }}";
+                    if ( p!="" )
+                    {
+                        s=s+"?who={{ who }}&key="+sel.val();
+                    }
+                    else {
+                        s=s+"?key="+sel.val();
+                    }
+                    window.location.href=s;
+                }
+            </script>            
+            <div class="col-md-4">
+                <select class="selectpicker" id="key" name="key"  data-width="auto" onchange="cate()">                           
+                    <option value="0" >按借阅数排序</option>
+                    <option value="1" >按评论数数排序</option>
+                    <option value="2" >按赞同数排序</option>
+                </select>
+            </div>
+            <script language="javascript" type="text/javascript">    
+                $("#key option[value='{{ key }}']").attr("selected", "selected");
+            </script>
+            <div class="col-md-10 col-md-offset-1">                
+                <table class="table table-hover table-bordered">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>用户名</th>
+                        <th>总借阅数</th>
+                        <th>总短评数</th>
+                        <th>获得总赞同数</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for person,numB,numC,numS in out_list %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><a href="{% url 'person' %}?id={{ person.id }}">{{ person.username }}</a></td>
+                            <td>{{ numB }}</td>
+                            <td>{{ numC }}</td>
+                            <td>{{ numS }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td>暂无该用户</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <nav>
+                    <ul class="pager">
+                        {% if out_list.has_previous %}
+                            <li class="previous"><a
+                                    href="?who={{ who }}&key={{ key }}&page={{ out_list.previous_page_number }}">上一页</a>
+                            </li>
+                        {% else %}
+                            <li class="previous disabled"><a href="#">上一页</a></li>
+                        {% endif %}
+                        第 {{ out_list.number }} / {{ out_list.paginator.num_pages }}页&nbsp;&nbsp;
+                        {% if out_list.has_next %}
+                            <li class="next"><a
+                                    href="?who={{ who }}&key={{ key }}&page={{ out_list.next_page_number }}">下一页</a>
+                            </li>
+                        {% else %}
+                            <li class="next disabled"><a href="#">下一页</a></li>
+                        {% endif %}
+                        <li>
+                            跳到&nbsp;<input type="text" id="jump_page" maxlength="9" type="text" style="width:40px;" onkeyup=" if (event.keyCode==13) jump()"> 页&nbsp;
+                            <button id="pager_go" type="button" value="确定" onclick="jump()" >确定</button>&nbsp;
+                        </li>
+                        <script type="text/javascript">
+                            function jump(){
+                                var num=$('#jump_page').val();
+                                if (num!=""&&(/(^[1-9]\d*$)/.test(num)))
+                                {
+                                    var p=Number(num);
+                                    if (p > {{ out_list.paginator.num_pages }}) p={{ out_list.paginator.num_pages }};
+                                    window.location.href="?who={{ who }}&key={{ key }}&page="+String(p);
+                                }
+                                else document.getElementById("jump_page").value="";
+                            }
+                        </script>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}

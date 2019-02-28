@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看图书{% endblock %}
+{% block head %}
+<br><br>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                {% if state == 'success' %}
+                    <script language="javascript" type="text/javascript">
+                        setTimeout(function(){alert("修改成功！")},5);
+                        window.location.href="{% url 'book_detail' %}?id={{ book.id }}"; 
+                    </script>
+                {% elif state == 'existed' %}
+                    <script type="text/javascript">
+                    $(function(){
+                            alert("新修改的ISBN已存在！");
+                    });
+                    </script>
+                {% endif %}
+                <form method="POST" role="form" class="form-horizontal" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="panel panel-default">    
+                        <div class="panel-heading">
+                            <h3 class="panel-title">修改书籍信息
+                                <div class="col-md-offset-8" style="display:inline-block;" >
+                                     <button class="btn btn btn-primary form-group" type="submit" style="display:inline-block;">保存修改</button>
+                                </div>  
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            
+                        </div>
+                        {% if book %}
+                        <div class="form-group">
+                            <label for="id_isbn" class="col-md-2 control-label">ISBN：</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" id="id_isbn" value="{{ book.isbn }}" required maxlength="13" name="isbn" autofocus>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_name" class="col-md-2 control-label">书名：</label>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" id="id_name" value="{{ book.bookname }}" required maxlength="40" name="name" autofocus>
+                                </div>  
+                        </div>
+    
+                        <div class="form-group">
+                            <label for="id_author" class="col-md-2 control-label">作者：</label>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" value="{{ book.author }}" required maxlength="20" name="author" id="id_author">
+                                </div>
+                            </div>
+
+                        <div class="form-group">
+                            <label for="id_category" class="col-md-2 control-label">类别：</label>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" value="{{ book.category }}" required maxlength="7" name="category" id="id_category">
+                                </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="id_publisher" class="col-md-2 control-label">出版社：</label>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" value="{{ book.publisher }}" required maxlength="20" name="publisher" id="id_publisher">
+                                </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="id_pubdate" class="col-md-2 control-label">出版日期：</label>
+                                <div class="col-md-9">
+                                    <input type="date" class="form-control" value="{{ book.date|date:'Y-m-d' }}" required name="pubdate" id="id_pubdate">
+                                </div>
+                            </div>
+                        <div class="form-group">
+                            <label for="id_num" class="col-md-2 control-label">数目：</label>
+                                <div class="col-md-9">
+                                    <input type="number" class="form-control" min="1" oninput="if(value.length>6)value=value.slice(0,6)" value="{{ book.totnum }}" required name="num" id="id_num">
+                                </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_img" class="col-md-2 control-label">书籍图片：</label>
+                            <div class="col-md-9">
+                                <input type="file" id="id_img" name="img" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_describe" class="col-md-2 control-label">书籍描述： </label>
+                            <div class="col-md-9">
+                                <textarea class="form-control" name='describe' id='id_describe' rows="6">{{ book.description}}</textarea>
+                            </div>
+                        </div>
+                        
+                        {% endif %}
+                    </div>   
+                </form>     
+            </div>
+            
+        </div>
+    </div>
+
+<div class="modal fade" id="deletebook" tabindex="-1" role="dialog">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					&times;
+				</button>
+				<h3 class="modal-title text-danger" id="myModalLabel">
+					警告
+				</h3>
+			</div>
+			<div class="modal-body text-warning">
+				书籍信息一旦删除将无法恢复，相关的书籍借阅信息也将被删除！
+                <br>
+                请问是否确定删除该书信息……
+			</div>
+			<div class="modal-footer">
+				<form method='post'>
+                    {% csrf_token %}
+                    <div>
+                        <input type="hidden" name="sure" value="yes">
+                        <button type="submit" class="btn btn-danger">是</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">否</button>
+                    </div>
+                </form>
+			</div>
+		</div>
+	</div>
+	</div>
+</body>
+{% endblock %}

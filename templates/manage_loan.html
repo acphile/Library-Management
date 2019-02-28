@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看图书{% endblock %}
+{% block head %}
+<header class="jumbotron subhead" id="header-base">
+    <div class="container">
+        <h1>借阅管理</h1>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+            {% if state == 'return_success' %}
+                <script language="javascript" type="text/javascript">
+                    setTimeout(function(){alert("归还成功！")},10);
+                </script>
+            {% endif %}
+            <form method="POST" role="form" class="form-horizontal" id="manageloan-form">
+                {% csrf_token %}
+                <div class="col-md-1">                    
+                </div>    
+                
+                <div class="col-md-3 form-group">
+                    <label class="col-md-4 control-label" for="id_borrower">借阅人：</label>
+                    <div class="col-md-8">
+                        <input class="form-control" type="search" id="id_borrower" name="borrower" placeholder="用户名" value="{{ borrower }}">
+                    </div>    
+                </div>
+                <div class="col-md-4 form-group">
+                    <label for="id_isbn" class="col-md-4 control-label">借阅书籍：</label>
+                    <div class="col-md-7">
+                        <input class="form-control" type="search" id="id_isbn" name="isbn" placeholder="ISBN" value="{{ isbn }}">
+                    </div>    
+                    <div class="col-md-1">
+                         <input class="btn btn-info form-group" type="submit" name="filter_loan" value="搜索">   
+                    </div>
+                </div>
+                <div class="col-md-2 col-md-offset-2">
+                    <input class="btn btn-primary btn-lg form-group" type="submit" name="return" value="确认还书" onclick="return Return_con()">
+                </div>    
+                <script type="text/javascript">
+                    function Return_con(){
+                        var flag = confirm("确认选中的记录已归还？");  
+                        if(flag==true) return true;  
+                        else return false;  
+                    };
+                </script>
+                <br><br><br>
+                <div class="col-md-10 col-md-offset-1">                
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th><br></th>
+                            <th>ISBN</th>
+                            <th>书名</th>
+                            <th>借阅人</th>
+                            <th>借阅时间</th>
+                            <th>应还时间</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for record,due in out_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <input type="checkbox" name="record" value="{{ record.id }}">
+                                </td>
+                                <td><a href="{% url 'book_detail' %}?id={{ record.Lbook.id }}">{{ record.Lbook.isbn }}</a></td>
+                                <td>{{ record.Lbook.bookname }}</td>
+                                <td><a href="{% url 'person' %}?id={{ record.borrower.id }}">{{ record.borrower.username }}</a></td>
+                                <td>{{ record.loandate|date:"Y-m-d H:i" }}</td>
+                                <td>{{ due|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td>暂无用户</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <nav>
+                        <ul class="pager">
+                            {% if loan_list.has_previous %}
+                                <li class="previous"><a
+                                        href="?borrower={{ borrower }}&isbn={{ isbn }}&page={{ loan_list.previous_page_number }}">上一页</a>
+                                </li>
+                            {% else %}
+                                <li class="previous disabled"><a href="#">上一页</a></li>
+                            {% endif %}
+                            第 {{ loan_list.number }} / {{ loan_list.paginator.num_pages }}页&nbsp;&nbsp;
+                            {% if loan_list.has_next %}
+                                <li class="next"><a
+                                        href="?borrower={{ borrower }}&isbn={{ isbn }}&page={{ loan_list.next_page_number }}">下一页</a>
+                                </li>
+                            {% else %}
+                                <li class="next disabled"><a href="#">下一页</a></li>
+                            {% endif %}
+                            <li>
+                                跳到&nbsp;<input type="text" id="jump_page" maxlength="9" type="text" style="width:40px;" onkeyup=" if (event.keyCode==13) jump()"> 页&nbsp;
+                                <button id="pager_go" type="button" value="确定" onclick="jump()" >确定</button>&nbsp;
+                            </li>
+                            <script type="text/javascript">
+                                function jump(){
+                                    var num=$('#jump_page').val();
+                                    if (num!=""&&(/(^[1-9]\d*$)/.test(num)))
+                                    {
+                                        var p=Number(num);
+                                        if (p > {{ loan_list.paginator.num_pages }}) p={{ loan_list.paginator.num_pages }};
+                                        window.location.href="?borrower={{ borrower }}&isbn={{ isbn }}&page="+String(p);
+                                    }
+                                    else document.getElementById("jump_page").value="";
+                                }
+                            </script>
+                        </ul>
+                    </nav>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+{% endblock %}

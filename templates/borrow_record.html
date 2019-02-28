@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看图书{% endblock %}
+{% block head %}
+<header class="jumbotron subhead" id="header-base">
+    <div class="container">
+        <h1>当前借阅</h1>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+            {% if state == 'extend_success' %}
+                    <script language="javascript" type="text/javascript">
+                        setTimeout(function(){alert("续借成功！")},5);
+                    </script>
+            {% endif %}
+            <form method="POST" role="form" id="changelist-form">
+                {% csrf_token %}
+                <button class="btn btn btn-primary form-group" type="submit" >续借选中书籍</button>
+                <div class="col-md-10 col-md-offset-1">
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>选择续借</th>
+                            <th>书名</th>
+                            <th>作者</th>
+                            <th>出版社</th>
+                            <th>借阅时间</th>
+                            <th>应还时间</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for record, returndate in record_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                {% if record.extended == True %}
+                                
+                                    <td>
+                                        <input type="checkbox" name="extend" value="{{ record.id }}" disabled="disabled">
+                                    </td>
+                                {% else %}
+                                    <td>
+                                        <input type="checkbox" name="extend" value="{{ record.id }}" >
+                                    </td>
+                                {% endif %}
+                                <td><a href="{% url 'book_detail' %}?id={{ record.Lbook.id }}">{{ record.Lbook.bookname }}</a></td>
+                                <td>{{ record.Lbook.author }}</td>
+                                <td>{{ record.Lbook.publisher }}</td>
+                                <td>{{ record.loandate|date:"Y-m-d H:i" }}</td>
+                                <td>{{ returndate|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td>暂无记录</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+{% endblock %}

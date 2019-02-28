@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看图书{% endblock %}
+{% block head %}
+<br><br>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+        
+            <div class="col-md-8 col-md-offset-2">
+                    {% if state == 'borrow-success' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书成功！")},50);
+                        </script>
+                    {% elif state == 'comment_success' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("提交成功！")},50);
+                        </script>
+                    {% elif state == 'user_locked' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书失败：请先归还超期图书！")},50);
+                        </script>
+                    {% elif state == 'limited' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书失败：可借书目已达到上限！")},50);
+                        </script>
+                    {% elif state == 'borrowed' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书失败：您已借过此书！")},50);
+                        </script>
+                    {% elif state == 'none' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书失败：架上已无可借书籍！")},50);
+                        </script>
+
+                    {% endif %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">书籍信息
+                                {% if user.is_superuser %}
+                                    <div class="col-md-offset-8" style="display:inline-block;" >
+                                        <form method="POST">
+                                            {% csrf_token %}
+                                            <a type="button" class="btn btn-warning" href="{% url 'edit_book' %}?id={{ book.id }}" >修改信息</a> 
+                                            <input class="btn btn btn-danger form-group" type="submit" name="delete" value="删除该书" onclick="return Del_con()">
+                                        </form>                                            
+                                    </div>
+                                {% elif user %}
+                                    <div class="col-md-offset-9" style="display:inline-block;" >
+                                        <form method="POST">
+                                            {% csrf_token %}
+                                            <input class="btn btn btn-primary form-group" type="submit" name="borrow" value="借阅此书" onclick="return Borrow_con()">
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </h3>    
+                        </div>
+                        <script type="text/javascript">
+                            function Borrow_con(){
+                                var flag = confirm("确认是否要借阅此书？");  
+                                if(flag==true) return true;  
+                                else return false;  
+                            };
+                            function Del_con(){
+                                var flag = confirm("书籍删除后相关借阅记录也会被删除！\n确认是否要删除该书？");  
+                                if(flag==true) return true;  
+                                else return false;  
+                            };
+                        </script>
+                        <table style="width:100%"><tr><td valign="top">
+                        <table class="table table-bordered table-striped">     
+                            <tr><td width="100">ISBN：</td><td>{{ book.isbn }}</td>
+                            </tr>
+                            <tr><td width="100">书名：</td><td>{{ book.bookname }}</td></tr>
+                            <tr><td width="100">类别：</td><td>{{ book.category }}</td></tr>
+                            <tr><td width="100">作者：</td><td>{{ book.author }}</td></tr>
+                            <tr><td width="100">出版社：</td><td>{{ book.publisher }}</td></tr>
+                            <tr><td width="100">出版日期：</td><td>{{ book.date|date:"Y-m-d" }}</td></tr>
+                            <tr><td width="100">馆藏数：</td><td>{{ book.totnum }}</td></tr>
+                            <tr><td width="100">借出数：</td>
+                            <td>
+                            {% if user.is_staff and lendnum > 0 %}
+                                <a href="{% url 'manage_loan' %}?isbn={{ book.isbn }}">{{ lendnum }}</a>（点击查看详细记录）
+                            {% else %}
+                            {{ lendnum }}
+                            {% endif %}
+                            </td></tr>
+                            <tr><td width="100">描述：</td><td>{{ book.description }}</td></tr>
+                        </table></td>
+                        <td align="center" valign="top" width="200" >
+                            <table>
+                            <tr>
+                            <div class="thumbnail">
+                             <img class="img-rounded" src="{% url 'media' book.pict %}">
+                            </div>
+                            </tr>
+                            <tr>
+                                <td>评分:</td>
+                                <td>{% if score == -1 %}
+                                            暂无评分
+                                        {% else %}
+                                            <input id="bookscore" class="rating" data-size="xs" value="{{ score }}">
+                                        {% endif %}</td>
+                            </tr></table></td>
+                            <script type="text/javascript">
+                                $("#bookscore").rating({'displayOnly':true});
+                            </script>
+                        </tr></table>
+                        <div class="panel-body">
+                        <br>
+                        <ul id="relatedtab" class="nav nav-tabs">
+                            <li class="active">
+                                <a href="#remark" data-toggle="tab">查看短评</a>
+                            </li>
+                            <li><a href="#edit_remark" data-toggle="tab">
+                            {% if user_mark %}
+                                修改我的短评
+                            {% else %}
+                                添加短评
+                            {% endif %}
+                            </a></li>            
+                        </ul>
+                        <div id="relatedtabContent" class="tab-content">
+                            <div class="tab-pane fade in active" name="remark" id="remark">
+                                <br>
+                                {% for comment,support,oppose,user_atti in out_list %}
+                                    <div class="panel panel-default" name="comment{{ comment.id }}" id="comment{{ comment.id }}">
+                                        <div class="panel-heading">
+                                            <table style="width:100%"><tr><td>
+                                            <table><tr><td>
+                                            {% if user == comment.sender %}
+                                                <a href="{% url 'personal_center' %}" class="text-danger"><span class="glyphicon glyphicon-user"></span> 我</a>&nbsp;&nbsp;&nbsp;
+                                            {% else %}
+                                                <a href="{% url 'person' %}?id={{ comment.sender.id }}" class="text-info"><span class="glyphicon glyphicon-user"></span> {{ comment.sender }}</a>&nbsp;&nbsp;&nbsp;
+                                            {% endif %} 
+                                            </td>
+                                            <td><input id="showscore{{ comment.id }}" class="rating" data-size="xs" value="{{ comment.score }}"></td>
+                                            <td>&nbsp;&nbsp;&nbsp;{{ comment.senddate|date:"Y-m-d H:i:s" }}</td>                                           
+                                            </tr></table></td>
+                                            {% if user == comment.sender or user.is_superuser %}
+                                                <td align="right"><form method="POST">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="del_id" value="{{ comment.id }}" /> 
+                                                    <button class="btn btn-link" type="submit" onclick="return del_com_con()">删除</button>
+                                                </form></td>
+                                            {% elif not comment.sender.is_staff and user.is_staff %}
+                                                <td align="right"><form method="POST">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="del_id" value="{{ comment.id }}" /> 
+                                                    <button class="btn btn-link" type="submit" onclick="return del_com_con()">删除</button>
+                                                </form></td>
+                                            {% endif %}
+                                            </tr></table>
+                                            <script type="text/javascript">
+                                                $("#showscore{{ comment.id }}").rating({'displayOnly':true});
+                                            </script>
+                                        </div>
+                                        <div class="panel-body">
+                                            {{ comment.content }}
+                                            <br>
+                                            <div class="pull-right">
+                                                {% if user_atti == -2 or user == comment.sender %} 
+                                                    <button name="support" class="btn btn-default btn-sm disabled" style="float:left"><span class="glyphicon glyphicon-thumbs-up"></span>({{ support }})</button>&nbsp;
+                                                    <button name="oppose" class="btn btn-default btn-sm disabled" ><span class="glyphicon glyphicon-thumbs-down"></span>({{ oppose }})</button>
+                                                {% elif user_atti == 0 %}
+                                                    <form method="POST" style="float:left">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="support_id" value="{{ comment.id }}" /> 
+                                                        <button type="submit" name="support" class="btn btn-default btn-sm" ><span class="glyphicon glyphicon-thumbs-up" onclick="loc()"></span>({{ support }})</button>&nbsp;
+                                                    </form>
+                                                    <form method="POST" style="float:left">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="oppose_id" value="{{ comment.id }}" />
+                                                        <button type="submit" name="oppose" class="btn btn-default btn-sm" ><span class="glyphicon glyphicon-thumbs-down" onclick="loc()"></span>({{ oppose }})</button>
+                                                    </form> 
+                                                {% elif user_atti == 1 %}
+                                                    <form method="POST" style="float:left">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="support_id" value="{{ comment.id }}" /> 
+                                                        <button type="submit" name="support" class="btn btn-info btn-sm" ><span class="glyphicon glyphicon-thumbs-up" onclick="loc()"></span>({{ support }})</button>&nbsp;
+                                                    </form>
+                                                    <button name="oppose" class="btn btn-default btn-sm disabled" ><span class="glyphicon glyphicon-thumbs-down"></span>({{ oppose }})</button>
+                                                {% elif user_atti == -1 %}
+                                                    <button name="support" class="btn btn-default btn-sm disabled" style="float:left"><span class="glyphicon glyphicon-thumbs-up"></span>({{ support }})</button>&nbsp;
+                                                    <form method="POST" style="float:left">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="oppose_id" value="{{ comment.id }}" />
+                                                        <button type="submit" name="oppose" class="btn btn-info btn-sm" ><span class="glyphicon glyphicon-thumbs-down"></span>({{ oppose }})</button>
+                                                    </form>
+                                                {% endif %}
+                                            </div>
+                                            <br>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p>暂无短评</p>
+                                {% endfor %}
+                                <nav>
+                                    <ul class="pager">
+                                    {% if comments_list.has_previous %}
+                                        <li class="previous"><a
+                                            href="?id={{ book.id }}&com_pg={{ comments_list.previous_page_number }}#remark">上一页</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="previous disabled"><a href="#remark">上一页</a></li>
+                                    {% endif %}
+                                    第 {{ comments_list.number }} / {{ comments_list.paginator.num_pages }}页&nbsp;&nbsp;
+                                    {% if comments_list.has_next %}
+                                    <li class="next"><a
+                                        href="?id={{ book.id }}&com_pg={{ comments_list.next_page_number }}#remark">下一页</a>
+                                    </li>
+                                    {% else %}
+                                        <li class="next disabled"><a href="#remark">下一页</a></li>
+                                    {% endif %}
+                                    <li>
+                                        跳到&nbsp;<input type="text" id="jump_page" maxlength="10" type="text" style="width:40px;" onkeyup=" if (event.keyCode==13) jump()"> 页&nbsp;
+                                        <button id="pager_go" type="button" value="确定" onclick="jump()" >确定</button>&nbsp;
+                                    </li>
+                                    <script type="text/javascript">
+                                        function jump(){
+                                            var num=$('#jump_page').val();
+                                            if (num!=""&&(/(^[1-9]\d*$)/.test(num)))
+                                            {
+                                                var p=Number(num);
+                                                if (p > {{ comments_list.paginator.num_pages }}) p={{ comments_list.paginator.num_pages }};
+                                                window.location.href="?id={{ book.id }}&com_pg="+String(p)+"#remark";
+                                            }
+                                            else document.getElementById("jump_page").value="";
+                                        }
+                                    </script>
+                                    </ul>
+                                </nav>
+                            </div>
+                            <div class="tab-pane fade" id="edit_remark">
+                                <br>
+                                {% if user %}
+                                <form method="POST" role="form" class="form-horizontal">
+                                    {% csrf_token %}
+                                    
+                                        <label for="score">您的评论:</label>
+                                    {% if user_mark %}
+                                        <input id="score" name="score" class="rating"  min="0" max="5" data-size="md" required value="{{ user_mark.score }}">
+                                    {% else %}
+                                        <input id="score" name="score" class="rating"  min="0" max="5" data-size="md" required>
+                                    {% endif %}             
+                                    <div class="form-group">
+                                        <div class="col-md-9">
+                                            {% if user_mark %}
+                                                <textarea class="form-control" required name='content' id='content' rows="8">{{ user_mark.content }}</textarea>
+                                            {% else %}    
+                                                <textarea class="form-control" required name='content' id='content' rows="8"></textarea>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="col-md-4">
+                                            <button class="btn btn btn-primary" type="submit" onclick="return Com_con()">
+                                            {% if user_mark %}
+                                                保存修改
+                                            {% else %}
+                                                提交短评
+                                            {% endif %}
+                                            </button>
+                                            {% if user_mark %}
+                                                <input class="btn btn-link" type="submit" name="drop" value="删除评论" onclick="return del_com_con()">
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </form>
+                                {% else %}
+                                   请先<a href="{% url 'login' %}?next={{ request.path }}" class="text-info">登陆</a> 
+                                {% endif %}
+                            </div>
+                            <script type="text/javascript">
+                                function Com_con(){
+                                    var flag = confirm("确认是否提交该评论？");  
+                                    if(flag==true) return true;  
+                                    else return false;  
+                                };
+                                function del_com_con(){
+                                    var flag = confirm("确认是否删除书评？");  
+                                    if(flag==true) return true;  
+                                    else return false;  
+                                };
+                            </script>
+                        </div>
+                        
+                        </div>
+                    </div>
+            </div>        
+        </div>
+    </div>
+
+{% endblock %}

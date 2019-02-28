@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看图书{% endblock %}
+{% block head %}
+<header class="jumbotron subhead" id="header-base">
+    <div class="container">
+        <h1>高级检索</h1>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="panel panel-info">
+                    <div class="panel-heading"><h4>检索信息</h4></div>
+                    <div class="panel-body">
+                    <div class="col-md-9">
+                        <form role="form" method="post" name="search_form" class="form-horizontal">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <div class="col-md-2">
+                            <select class="selectpicker" id="what0" name="what"  data-width="auto">                           
+                                <option value="bookname" >书名</option>
+                                <option value="isbn" >isbn</option>
+                                <option value="category" >类别</option>
+                                <option value="author" >作者</option>
+                                <option value="publisher">出版社</option>
+                                <option value="description">描述</option>
+                            </select>
+                            </div>
+                            <div class="col-md-2" >
+                            <select class="selectpicker" id="constrain0" name="constrain"  data-width="auto">
+                                <option value="exact" >精确</option>
+                                <option value="contain" >包含</option>
+                            </select>
+                            </div>
+                            <div class="col-md-5">                          
+                                <input type="search" class="form-control" name="keyword" id="keyword0" placeholder="关键字" required>
+                            </div>    
+                            <div class="col-md-1" >
+                            <select class="selectpicker" id="choose0" name="choose"  data-width="auto">
+                                <option value="and">且</option>
+                                <option value="except">差</option>
+                            </select>
+                            </div>
+                        </div>
+                    
+                        <div class="form-group">
+                            <div class="col-md-2">
+                            <select class="selectpicker" id="what1" name="what"  data-width="auto">
+                                <option value="bookname" >书名</option>
+                                <option value="isbn">isbn</option>
+                                <option value="category">类别</option>
+                                <option value="author" >作者</option>
+                                <option value="publisher">出版社</option>
+                                <option value="description">描述</option>
+                            </select>
+                            </div>
+                            <div class="col-md-2" >
+                            <select class="selectpicker" id="constrain1" name="constrain"  data-width="auto">
+                                <option value="exact" >精确</option>
+                                <option value="contain" >包含</option>
+                            </select>
+                            </div>
+                            <div class="col-md-5">                          
+                                <input type="search" class="form-control" name="keyword" id="keyword1" placeholder="关键字" >
+                            </div>    
+                            <div class="col-md-1" >
+                            <select class="selectpicker" id="choose1" name="choose"  data-width="auto">
+                                <option value="and">且</option>
+                                <option value="except">差</option>
+                            </select>
+                            </div>
+                        </div>
+                    
+                        <div class="form-group">
+                            <div class="col-md-2">
+                            <select class="selectpicker" id="what2" name="what"  data-width="auto">
+                                <option value="bookname" >书名</option>
+                                <option value="isbn">isbn</option>
+                                <option value="category" >类别</option>
+                                <option value="author">作者</option>
+                                <option value="publisher">出版社</option>
+                                <option value="description">描述</option>
+                            </select>
+                            </div>
+                            <div class="col-md-2" >
+                                <select class="selectpicker" id="constrain2" name="constrain"  data-width="auto">
+                                    <option value="exact" >精确</option>
+                                    <option value="contain" >包含</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">                          
+                                <input type="search" class="form-control" name="keyword" id="keyword2" placeholder="关键字" >
+                            </div>    
+                            <div class="col-md-1" >
+                                <select class="selectpicker" id="choose2" name="choose"  data-width="auto">
+                                    <option value="and">且</option>
+                                    <option value="except">差</option>
+                                </select>
+                            </div>
+                        </div>
+                    
+                        <div class="form-group">
+                            <div class="col-md-2">
+                            <select class="selectpicker" id="what3" name="what"  data-width="auto">
+                                <option value="bookname" >书名</option>
+                                <option value="isbn">isbn</option>
+                                <option value="category" >类别</option>
+                                <option value="author">作者</option>
+                                <option value="publisher">出版社</option>
+                                <option value="description">描述</option>
+                            </select>
+                            </div>
+                            <div class="col-md-2" >
+                            <select class="selectpicker" id="constrain3" name="constrain"  data-width="auto">
+                                <option value="exact" >精确</option>
+                                <option value="contain" >包含</option>
+                            </select>
+                            </div>
+                            <div class="col-md-5">                          
+                                <input type="search" class="form-control" name="keyword" id="keyword3" placeholder="关键字" >
+                            </div>    
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="from_date" class="col-md-2 control-label" >出版日期起</label>
+                            <div class="col-md-4">
+                            <input type="date" class="form-control" name="from_date" id="from_date" >
+                            </div>
+                            <label for="end_date" class="col-md-1 control-label" >止</label>
+                            <div class="col-md-4">
+                                <input type="date" class="form-control" name="end_date" id="end_date">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="can_borrow" class="col-md-3 control-label" >是否要求架上有书：</label>
+                            <div id="can_borrow" class="col-md-5"> 
+                            <label class="radio-inline">
+                                <input type="radio" name="remain" id="optionsRadios1" value="yes">是
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="remain" id="optionsRadios2"  value="no" checked>否
+                            </label>
+                            </div>
+                            <div class="col-md-2"><button class="btn btn btn-info btn-lg form-group" type="reset" >重置</button></div>
+                            <div class="col-md-2"><button class="btn btn btn-success btn-lg form-group" type="submit" >搜索</button></div>
+                        </div>      
+                        
+                            {% for w in what %}      
+                            <script type="text/javascript">
+                                $("#what{{ forloop.counter0 }} option[value='{{ w }}']").attr("selected", "selected");            
+                            </script>
+                            {% endfor %}
+                            {% for c in constrain %}      
+                            <script type="text/javascript">
+                                $("#constrain{{ forloop.counter0 }} option[value='{{ c }}']").attr("selected", "selected");            
+                            </script>
+                            {% endfor %}
+                            {% for k in keyword %}      
+                            <script type="text/javascript">
+                                document.getElementById("keyword{{ forloop.counter0 }}").value ='{{ k }}';            
+                            </script>
+                            {% endfor %}
+                            {% for c in choose %}      
+                            <script type="text/javascript">
+                                $("#choose{{ forloop.counter0 }} option[value='{{ c }}']").attr("selected", "selected");            
+                            </script>
+                            {% endfor %}
+                            <script type="text/javascript">
+                                 $("input[name=remain][value='{{ remain }}']").attr("checked", true); 
+                                 document.getElementById("from_date").value ='{{ from_date }}';                                 
+                                 document.getElementById("end_date").value ='{{ end_date }}';
+                            </script>
+                        </form>
+                    </div>
+                    {% if state %}
+                    <div class="col-md-12">
+                        <h3>搜索结果：<small>点击查看详细信息</small></h3>
+                    </div>
+                    <div class="col-md-12">
+                    <br>
+                        <table class="table table-hover table-bordered">
+                            <thead>
+                            <tr>
+                                <th>ISBN</th>
+                                <th>书名</th>
+                                <th>类别</th>
+                                <th>作者</th>
+                                <th>出版社</th>
+                                <th>已借出</th>
+                                <th>馆藏数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for book,lendnum in out_list %}
+                                <tr>
+                                    <td><a href="{% url 'book_detail' %}?id={{ book.id }}">{{ book.isbn }}</a></td>
+                                    <td>{{ book.bookname }}</td>
+                                    <td>{{ book.category }}</td>
+                                    <td>{{ book.author }}</td>
+                                    <td>{{ book.publisher }}</td>
+                                    <td>{{ lendnum }}</td>
+                                    <td>{{ book.totnum }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td>暂无图书</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                    </div>
+                </div>
+            </div>    
+        </div>
+    </div>
+{% endblock %}

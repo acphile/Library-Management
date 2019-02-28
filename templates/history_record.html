@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看图书{% endblock %}
+{% block head %}
+<header class="jumbotron subhead" id="header-base">
+    <div class="container">
+        <h1>借阅历史</h1>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">                
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>书名</th>
+                            <th>作者</th>
+                            <th>出版社</th>
+                            <th>借阅日期</th>
+                            <th>还书日期</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for record in history_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><a href="{% url 'book_detail' %}?id={{ record.Lbook.id }}">{{ record.Lbook.bookname }}</a></td>
+                                <td>{{ record.Lbook.author }}</td>
+                                <td>{{ record.Lbook.publisher }}</td>
+                                <td>{{ record.loandate|date:"Y-m-d H:i" }}</td>
+                                <td>{{ record.returndate|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td>暂无记录</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <nav>
+                        <ul class="pager">
+                            {% if history_list.has_previous %}
+                                <li class="previous"><a
+                                        href="?page={{ history_list.previous_page_number }}">上一页</a>
+                                </li>
+                            {% else %}
+                                <li class="previous disabled"><a href="#">上一页</a></li>
+                            {% endif %}
+                            第 {{ history_list.number }} / {{ history_list.paginator.num_pages }}页&nbsp;&nbsp;
+                            {% if history_list.has_next %}
+                                <li class="next"><a
+                                        href="?page={{ history_list.next_page_number }}">下一页</a>
+                                </li>
+                            {% else %}
+                                <li class="next disabled"><a href="#">下一页</a></li>
+                            {% endif %}
+                            <li>
+                                跳到&nbsp;<input type="text" id="jump_page" maxlength="10" type="text" style="width:40px;" onkeyup=" if (event.keyCode==13) jump()"> 页&nbsp;
+                                <button id="pager_go" type="button" value="确定" onclick="jump()" >确定</button>&nbsp;
+                            </li>
+                            <script type="text/javascript">
+                                function jump(){
+                                    var num=$('#jump_page').val();
+                                    if (num!=""&&(/(^[1-9]\d*$)/.test(num)))
+                                    {
+                                        var p=Number(num);
+                                        if (p > {{ history_list.paginator.num_pages }}) p={{ history_list.paginator.num_pages }};
+                                        window.location.href="?page="+String(p);
+                                    }
+                                    else document.getElementById("jump_page").value="";
+                                }
+                            </script>
+                        </ul>
+                    </nav>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}

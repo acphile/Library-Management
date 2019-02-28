@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看图书{% endblock %}
+{% block head %}
+<header class="jumbotron subhead" id="header-base">
+    <div class="container">
+        <h1>馆藏图书</h1>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                    {% if state == 'borrow-success' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书成功！")},50);
+                        </script>
+                    {% elif state == 'user_locked' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书失败：请先归还超期图书！")},50);
+                        </script>
+                    {% elif state == 'limited' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书失败：可借书目已达到上限！")},50);
+                        </script>
+                    {% elif state == 'borrowed' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书失败：您已借过此书！")},50);
+                        </script>
+                    {% elif state == 'none' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("借书失败：架上已无可借书籍！")},50);
+                        </script>
+                    {% endif %}
+                    
+                    <form role="form" method="post" name="search_form">
+                        {% csrf_token %}
+                        <div class="col-md-1">
+                        <select class="selectpicker" id="what" name="what" required data-width="auto">
+                            <option value="name" >书名</option>
+                            <option value="isbn" >isbn</option>
+                        </select>
+                        <script language="javascript" type="text/javascript">
+                            $("#what option[value='{{ whatkind }}']").attr("selected", "selected");
+                        </script>
+                        </div>
+                        <div class="col-md-4">                          
+                            <input type="search" class="form-control" name="keyword" value="{{ keyword }}"
+                                   placeholder="Enter keywords to search" id="id_search_input" onkeyup="key_up()"
+                                   autofocus>
+                        </div>
+                    </form>
+                    <div class="col-md-2">
+                        <a type="button" class="btn btn-link" href="search"><font size="3">高级搜索</font></a>
+                    </div>
+                    {% if user.is_superuser %}
+                    <div class="col-md-2">
+                        <a type="button" class="btn btn-success" href="{% url 'add_book' %}">添加书籍</a>
+                    </div>
+                    {% endif %}
+                    <script type="text/javascript">
+                        function key_up() {
+                            var old_value = $('#id_search_input').val();
+                            setTimeout(function () {
+                                var new_value = $('#id_search_input').val();
+                                if (old_value == new_value) {
+                                    document.search_form.submit();
+                                }
+                            }, 2000);
+                        }
+                    </script>
+                    <br><br><br>
+            <div class="col-md-2" style="float:right">
+                   <script language="javascript" type="text/javascript">
+                        function cate(){
+                            var sel=$("#genre option:selected");
+                            var s="{% url 'view_books' %}?category="+sel.val();
+                            var p="{{ keyword }}";
+                            if ( p!='' )
+                            {
+                                s=s+"&kind={{ whatkind }}&key={{ keyword }}";
+                            }
+                            window.location.href=s;
+                        }
+                    </script>
+                    
+                    <select class="selectpicker show-tick form-control" id="genre" name="genre" data-width="auto" data-first-option="false" title='请选择类别' required data-live-search="true" onchange="cate()">
+                         <option value="all" >全部图书</option>
+                            {% for category in category_list %}
+                                <option value="{{ category }}" >{{ category }}</option>
+                            {% endfor %} 
+                    </select>                    
+                    <script language="javascript" type="text/javascript">    
+                        $("#genre option[value='{{ query_category }}']").attr("selected", "selected");
+                    </script>            
+            </div>     
+            <div class="col-md-10">
+                   
+                        {% for book,lendnum,score in out_list %}
+                            <div class="panel panel-warning">
+                                <div class="panel-heading">
+                                    <table style="width:100%"><tr>
+                                    <td>
+                                        <font size="4"><a href="{% url 'book_detail' %}?id={{ book.id }}">{{ book.bookname }}</a></font>
+                                    </td>
+                                    <td align="right">
+                                    {% if user.is_superuser %}            
+                                        <form method="POST">
+                                            {% csrf_token %}
+                                            <a type="button" class="btn btn-warning" href="{% url 'edit_book' %}?id={{ book.id }}" >修改信息</a>
+                                            <input type="hidden" name="delete" value="{{ book.id }}" />                                            
+                                            <button class="btn btn btn-danger form-group" type="submit" onclick="return Del_con()">删除该书</button>
+                                        </form>                                            
+                                    {% elif user %}
+                                    <div style="display:inline-block;">
+                                        <form method="POST">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="borrow" value="{{ book.id }}" />
+                                            <button class="btn btn btn-primary form-group" type="submit" onclick="return Borrow_con()">借阅此书</button>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                    </td>
+                                    </tr>
+                                    </table>
+                                </div>
+                        <script type="text/javascript">
+                            function Borrow_con(){
+                                var flag = confirm("确认是否要借阅此书？");  
+                                if(flag==true) return true;  
+                                else return false;  
+                            };
+                            function Del_con(){
+                                var flag = confirm("书籍删除后相关借阅记录也会被删除！\n确认是否要删除该书？");  
+                                if(flag==true) return true;  
+                                else return false;  
+                            };
+                        </script>
+                            <table style="width:100%">
+                                <tr><td width="100" valign="top">
+                                <div class="thumbnail">
+                                    <img class="img-rounded" src="{% url 'media' book.pict %}">
+                                </div>
+                                </td><td valign="top">
+                                    <table class="table">
+                                        <tr><td>作者：</td><td valign="top">{{ book.author }}</td><td>ISBN：</td><td valign="top">{{ book.isbn }}</td></tr>
+                                        <tr><td>出版社：</td><td valign="top">{{ book.publisher }}</td><td>出版日期：</td><td valign="top">{{ book.date|date:"Y-m-d" }}</td></tr>
+                                        <tr><td>类别：</td><td valign="top">{{ book.category }}</td><td>评分：</td><td valign="top">
+                                        {% if score == -1 %}
+                                            暂无评分
+                                        {% else %}
+                                            <input id="bookscore{{ book.id }}" class="rating" data-size="xs" value="{{ score }}">
+                                        {% endif %}
+                                        </td></tr>
+                                        <tr><td></td><td></td><td></td><td colspan=2 align="center">借出数：{{ lendnum }}, 馆藏数：{{ book.totnum }}</td></tr>
+                                    </table>
+                                    <script type="text/javascript">
+                                        $("#bookscore{{ book.id }}").rating({'displayOnly':true});
+                                    </script>
+                                </td></tr>
+                            </table>    
+                            </div>
+                        {% empty %}
+                            暂无图书
+                        {% endfor %}
+                    
+                    <nav>
+                        <ul class="pager">
+                            {% if book_list.has_previous %}
+                                <li class="previous"><a
+                                        href="?category={{ query_category }}&kind={{ whatkind }}&key={{ keyword }}&page={{ book_list.previous_page_number }}">上一页</a>
+                                </li>
+                            {% else %}
+                                <li class="previous disabled"><a href="#">上一页</a></li>
+                            {% endif %}
+                            第 {{ book_list.number }} / {{ book_list.paginator.num_pages }}页&nbsp;&nbsp;
+                            {% if book_list.has_next %}
+                                <li class="next"><a
+                                        href="?category={{ query_category }}&kind={{ whatkind }}&key={{ keyword }}&page={{ book_list.next_page_number }}">下一页</a>
+                                </li>
+                            {% else %}
+                                <li class="next disabled"><a href="#">下一页</a></li>
+                            {% endif %}
+                            <li>
+                                跳到&nbsp;<input type="text" id="jump_page" maxlength="9" type="text" style="width:40px;" onkeyup=" if (event.keyCode==13) jump()"> 页&nbsp;
+                                <button id="pager_go" type="button" value="确定" onclick="jump()" >确定</button>&nbsp;
+                            </li>
+                            <script type="text/javascript">
+                                function jump(){
+                                    var num=$('#jump_page').val();
+                                    if (num!=""&&(/(^[1-9]\d*$)/.test(num)))
+                                    {
+                                        var p=Number(num);
+                                        if (p > {{ book_list.paginator.num_pages }}) p={{ book_list.paginator.num_pages }};
+                                        window.location.href=url_calc(p);
+                                    }
+                                    else document.getElementById("jump_page").value="";
+                                }
+                                function url_calc(pg){
+                                    var s="?category={{ query_category }}";
+                                    var p="{{ keyword }}";
+                                    if ( p!='' )
+                                    {
+                                        s=s+"&kind={{ whatkind }}&key={{ keyword }}";
+                                    }
+                                    s=s+"&page="+String(pg);
+                                    return s;
+                                }
+                                    
+                                    
+                            </script>
+                        </ul>
+                    </nav>
+            </div>
+        </div>
+    </div>
+{% endblock %}

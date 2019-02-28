@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看用户{% endblock %}
+{% block head %}
+<header class="jumbotron subhead" id="header-base">
+    <div class="container">
+        <h1>{{ person.username }}</h1>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+        
+            <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">用户信息
+                                
+                            </h3>    
+                        </div>
+                        <table style="width:100%"><tr><td>
+                        <table class="table table-bordered table-striped">     
+                            <tr><td width="120">身份：</td><td>
+                            {% if person.is_superuser %}
+                                <div class="text-danger">管理员</div>
+                            {% elif person.is_staff %}
+                                <div class="text-warning">
+                                {% if user.is_superuser %}
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        员工&nbsp;
+                                        <input type="hidden" name="status" value="down" /> 
+                                        <button class="btn btn-sm btn-danger" type="submit" onclick="return status_con()">解除员工身份</button>
+                                    </form>
+                                {% else %}
+                                    员工
+                                {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="text-info">
+                                {% if user.is_superuser %}
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        普通用户&nbsp;
+                                        <input type="hidden" name="status" value="up" /> 
+                                        <button class="btn btn-sm btn-danger" type="submit" onclick="return status_con()">设置为员工</button>
+                                    </form>
+                                {% else %}
+                                    普通用户
+                                {% endif %}
+                                </div>
+                            {% endif %}
+                            </td></tr>
+                            <tr><td width="120">性别：</td>
+                            <td>
+                            {% if account.sex == True %}
+                                男
+                            {% else %}
+                                女
+                            {% endif %}                            
+                            </td></tr>
+                            <tr><td width="120">邮箱：</td><td>{{ person.email }}</td></tr>
+                            <tr><td width="120">电话：</td><td>{{ account.telephone }}</td></tr>
+                            <tr><td width="120">地址：</td><td>{{ account.address }}</td></tr>
+                            <tr><td width="120">总借阅数：</td><td>{{ totalB }}</td></tr>
+                            {% if user.is_staff %}
+                                <tr><td width="120">当前借阅数：</td>
+                                <td>
+                                {% if borrownum > 0 %}
+                                    <a href="{% url 'manage_loan' %}?borrower={{ person.username }}">{{ borrownum }}</a>（点击查看详细记录）
+                                {% else %}
+                                    0
+                                {% endif %}
+                                </td></tr>    
+                            {% endif %}
+                            <tr><td width="120">发表短评数：</td>
+                            <td>{{ comments_num }}
+                            </td></tr>
+                            <tr><td width="120">获得赞同数：</td><td>{{ support_num }}</td></tr>
+                            <tr><td width="120">获得反对数：</td><td>{{ oppose_num }}</td></tr>
+                        </table></td>
+                        </tr></table>
+                        
+                        <div class="panel-body">
+                            <h4>他的短评：</h4>
+                            <div id="remark">
+                                {% for comment,support,oppose,user_atti in out_list %}
+                                    <div class="panel panel-default" name="comment{{ comment.id }}" id="comment{{ comment.id }}">
+                                        <div class="panel-heading">
+                                            <table style="width:100%"><tr><td>
+                                            <table><tr><td>
+                                                书名：<a href="{% url 'book_detail' %}?id={{ comment.Rbook.id }}#remark">{{ comment.Rbook.bookname }}</a>&nbsp;&nbsp;&nbsp;
+                                            </td>
+                                            <td><input id="showscore{{ comment.id }}" class="rating" data-size="xs" value="{{ comment.score }}"></td>
+                                            <td>&nbsp;&nbsp;&nbsp;{{ comment.senddate|date:"Y-m-d H:i:s" }}</td>                                           
+                                            </tr></table></td>
+                                            {% if user.is_superuser %}
+                                                <td align="right"><form method="POST">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="del_id" value="{{ comment.id }}" /> 
+                                                    <button class="btn btn-link" type="submit" onclick="return del_com_con()">删除</button>
+                                                </form></td>
+                                            {% elif not person.is_staff and user.is_staff %}
+                                                <td align="right"><form method="POST">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="del_id" value="{{ comment.id }}" /> 
+                                                    <button class="btn btn-link" type="submit" onclick="return del_com_con()">删除</button>
+                                                </form></td>
+                                            {% endif %}
+                                            </tr></table>
+                                            <script type="text/javascript">
+                                                $("#showscore{{ comment.id }}").rating({'displayOnly':true});
+                                                function del_com_con(){
+                                                    var flag = confirm("确认是否删除书评？");  
+                                                    if(flag==true) return true;  
+                                                    else return false;  
+                                                };
+                                                function status_con(){
+                                                    var flag = confirm("确认是否变更该用户身份？");  
+                                                    if(flag==true) return true;  
+                                                    else return false;  
+                                                };
+                                            </script>
+                                        </div>
+                                        <div class="panel-body">
+                                            {{ comment.content }}
+                                            <br>
+                                            <div class="pull-right">
+                                                {% if user_atti == -2 or user == comment.sender %} 
+                                                    <button name="support" class="btn btn-default btn-sm disabled" style="float:left"><span class="glyphicon glyphicon-thumbs-up"></span>({{ support }})</button>&nbsp;
+                                                    <button name="oppose" class="btn btn-default btn-sm disabled" ><span class="glyphicon glyphicon-thumbs-down"></span>({{ oppose }})</button>
+                                                {% elif user_atti == 0 %}
+                                                    <form method="POST" style="float:left">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="support_id" value="{{ comment.id }}" /> 
+                                                        <button type="submit" name="support" class="btn btn-default btn-sm" ><span class="glyphicon glyphicon-thumbs-up" onclick="loc()"></span>({{ support }})</button>&nbsp;
+                                                    </form>
+                                                    <form method="POST" style="float:left">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="oppose_id" value="{{ comment.id }}" />
+                                                        <button type="submit" name="oppose" class="btn btn-default btn-sm" ><span class="glyphicon glyphicon-thumbs-down" onclick="loc()"></span>({{ oppose }})</button>
+                                                    </form> 
+                                                {% elif user_atti == 1 %}
+                                                    <form method="POST" style="float:left">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="support_id" value="{{ comment.id }}" /> 
+                                                        <button type="submit" name="support" class="btn btn-info btn-sm" ><span class="glyphicon glyphicon-thumbs-up" onclick="loc()"></span>({{ support }})</button>&nbsp;
+                                                    </form>
+                                                    <button name="oppose" class="btn btn-default btn-sm disabled" ><span class="glyphicon glyphicon-thumbs-down"></span>({{ oppose }})</button>
+                                                {% elif user_atti == -1 %}
+                                                    <button name="support" class="btn btn-default btn-sm disabled" style="float:left"><span class="glyphicon glyphicon-thumbs-up"></span>({{ support }})</button>&nbsp;
+                                                    <form method="POST" style="float:left">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="oppose_id" value="{{ comment.id }}" />
+                                                        <button type="submit" name="oppose" class="btn btn-info btn-sm" ><span class="glyphicon glyphicon-thumbs-down"></span>({{ oppose }})</button>
+                                                    </form>
+                                                {% endif %}
+                                            </div>
+                                            <br>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p>暂无短评</p>
+                                {% endfor %}
+                                <nav>
+                                    <ul class="pager">
+                                    {% if comments_list.has_previous %}
+                                        <li class="previous"><a
+                                            href="?id={{ person.id }}&com_pg={{ comments_list.previous_page_number }}#remark">上一页</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="previous disabled"><a href="#remark">上一页</a></li>
+                                    {% endif %}
+                                    第 {{ comments_list.number }} / {{ comments_list.paginator.num_pages }}页&nbsp;&nbsp;
+                                    {% if comments_list.has_next %}
+                                    <li class="next"><a
+                                        href="?id={{ person.id }}&com_pg={{ comments_list.next_page_number }}#remark">下一页</a>
+                                    </li>
+                                    {% else %}
+                                        <li class="next disabled"><a href="#remark">下一页</a></li>
+                                    {% endif %}
+                                    <li>
+                                        跳到&nbsp;<input type="text" id="jump_page" maxlength="10" type="text" style="width:40px;" onkeyup=" if (event.keyCode==13) jump()"> 页&nbsp;
+                                        <button id="pager_go" type="button" value="确定" onclick="jump()" >确定</button>&nbsp;
+                                    </li>
+                                    <script type="text/javascript">
+                                        function jump(){
+                                            var num=$('#jump_page').val();
+                                            if (num!=""&&(/(^[1-9]\d*$)/.test(num)))
+                                            {
+                                                var p=Number(num);
+                                                if (p > {{ comments_list.paginator.num_pages }}) p={{ comments_list.paginator.num_pages }};
+                                                window.location.href="?id={{ person.id }}&com_pg="+String(p)+"#remark";
+                                            }
+                                            else document.getElementById("jump_page").value="";
+                                        }
+                                    </script>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+            </div>        
+        </div>
+    </div>
+
+{% endblock %}

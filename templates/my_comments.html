@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看我的短评{% endblock %}
+{% block head %}
+<header class="jumbotron subhead" id="header-base">
+    <div class="container">
+        <h1>我的短评</h1>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                    {% if state == 'change_success' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("提交成功！")},10);
+                        </script>
+                    {% elif state == 'delete_comment' %}
+                        <script language="javascript" type="text/javascript">
+                            setTimeout(function(){alert("短评删除成功！")},10);
+                        </script>
+                    {% endif %}
+                        {% for comment,support,oppose,user_atti in out_list %}
+                            <div class="panel panel-default" name="comment{{ comment.id }}" id="comment{{ comment.id }}">
+                                <div class="panel-heading">
+                                    <table style="width:100%"><tr><td>
+                                        <table>
+                                            <tr><td>
+                                                书名：<a href="{% url 'book_detail' %}?id={{ comment.Rbook.id }}#remark">{{ comment.Rbook.bookname }}</a>&nbsp;&nbsp;&nbsp;
+                                            </td>
+                                            <td><input id="showscore{{ comment.id }}" class="rating" data-size="xs" value="{{ comment.score }}"></td>
+                                            <td>&nbsp;&nbsp;&nbsp;{{ comment.senddate|date:"Y-m-d H:i:s" }}</td>                                           
+                                        </table></td>
+                                    </tr></table>
+                                    <script type="text/javascript">
+                                        $("#showscore{{ comment.id }}").rating({'displayOnly':true});
+                                    </script>
+                                </div>
+                                <div class="panel-body">
+                                    {{ comment.content }}
+                                    <br>
+                                    <div class="pull-right">
+                                        <button name="support" class="btn btn-default btn-sm disabled" style="float:left"><span class="glyphicon glyphicon-thumbs-up"></span>({{ support }})</button>&nbsp;
+                                        <button name="oppose" class="btn btn-default btn-sm disabled" ><span class="glyphicon glyphicon-thumbs-down"></span>({{ oppose }})</button>
+                                    </div>
+                                    <br>
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="del_id" value="{{ comment.id }}" /> 
+                                        <button class="btn btn-link" type="submit" onclick="return del_com_con()">删除</button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% empty %}
+                                <p>暂无短评</p>
+                            {% endfor %}
+                                <nav>
+                                    <ul class="pager">
+                                    {% if comments_list.has_previous %}
+                                        <li class="previous"><a
+                                            href="?pg={{ comments_list.previous_page_number }}#comments">上一页</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="previous disabled"><a href="#comments">上一页</a></li>
+                                    {% endif %}
+                                    第 {{ comments_list.number }} / {{ comments_list.paginator.num_pages }}页&nbsp;&nbsp;
+                                    {% if comments_list.has_next %}
+                                    <li class="next"><a
+                                        href="?pg={{ comments_list.next_page_number }}#comments">下一页</a>
+                                    </li>
+                                    {% else %}
+                                        <li class="next disabled"><a href="#comments">下一页</a></li>
+                                    {% endif %}
+                                    <li>
+                                        跳到&nbsp;<input type="text" id="jump_page" maxlength="10" type="text" style="width:40px;" onkeyup=" if (event.keyCode==13) jump()"> 页&nbsp;
+                                        <button id="pager_go" type="button" value="确定" onclick="jump()" >确定</button>&nbsp;
+                                    </li>
+                                    <script type="text/javascript">
+                                        function jump(){
+                                            var num=$('#jump_page').val();
+                                            if (num!=""&&(/(^[1-9]\d*$)/.test(num)))
+                                            {
+                                                var p=Number(num);
+                                                if (p > {{ comments_list.paginator.num_pages }}) p={{ comments_list.paginator.num_pages }};
+                                                window.location.href="?pg="+String(p)+"#comments";
+                                            }
+                                            else document.getElementById("jump_page").value="";
+                                        }
+                                    </script>
+                                    </ul>
+                                </nav>
+                            
+                            <script type="text/javascript">
+                                function Com_con(){
+                                    var flag = confirm("确认是否提交该评论？");  
+                                    if(flag==true) return true;  
+                                    else return false;  
+                                };
+                                function del_com_con(){
+                                    var flag = confirm("确认是否删除书评？");  
+                                    if(flag==true) return true;  
+                                    else return false;  
+                                };
+                            </script>
+            </div>    
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}查看图书{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+           <div class="col-md-10 col-md-offset-1">
+                <div class="col-md-6 col-md-offset-3">
+                    <div class="well">
+                        <h1 class="text-success text-center">欢迎，{{ user.username }}!</h1>
+                    </div>
+                </div>
+                <div class="col-md-10 col-md-offset-1">                
+                <ul id="usertab" class="nav nav-tabs">
+                    <li >
+                        <a href="#personal_datail" data-toggle="tab">我的基本信息</a>
+                    </li>
+                    <li class="active"><a href="#loan_record" data-toggle="tab">我的借阅</a></li>
+                    <li><a href="#comment_list" data-toggle="tab">我的短评</a></li>                     
+                </ul>
+                <div id="usertabContent" class="tab-content">
+                    <div class="tab-pane fade" id="personal_datail">
+                        <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="col-md-10 col-md-offset-1">
+                            <table class="table table-bordered table-striped">
+                                <tr><td width="140">身份：</td><td>
+                                {% if user.is_superuser %}
+                                    <div class="text-danger">管理员</div>
+                                {% elif user.is_staff %}
+                                    <div class="text-warning">员工</div>
+                                {% else %}
+                                    <div class="text-info">普通用户</div>
+                                {% endif %}
+                                </td></tr>  
+                                <tr><td width="140">性别：</td>
+                                <td>
+                                {% if account.sex == True %}
+                                    男
+                                {% else %}
+                                    女
+                                {% endif %}                            
+                                </td></tr>                                
+                                <tr><td width="140">邮箱：</td><td>{{ user.email }}</td></tr>
+                                <tr><td width="140">电话：</td><td>{{ account.telephone }}</td></tr>
+                                <tr><td width="140">地址：</td><td>{{ account.address }}</td></tr>
+                                <tr><td width="140">每页显示书目数：</td><td>{{ account.BookNum }}</td></tr>
+                                <tr><td width="140">每页显示记录数：</td><td>{{ account.RecordNum }}</td></tr>
+                                <tr><td width="140">每页显示评论数：</td><td>{{ account.CommentNum }}</td></tr>
+                            </table>
+                            <div align="center">
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#detail">修改信息</button>
+                            </div>
+                            <div class="modal fade" id="detail" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                            <h4 class="modal-title" id="myModalLabel">修改信息</h4>
+                                        </div>
+                                        <form method="POST" role="form" class="form-horizontal">
+                                            {% csrf_token %}
+                                            <div class="modal-body">
+                                                <div class="form-group">
+                                                    <label for="id_sex" class="col-md-2 control-label" >性别：</label>
+                                                    <div id="id_sex" class="col-md-9"> 
+                                                        {% if account.sex == True %}
+                                                            <label class="radio-inline">
+                                                                <input type="radio" name="sex" id="optionsRadios1" value="M" checked>男
+                                                            </label>
+                                                            <label class="radio-inline">
+                                                                <input type="radio" name="sex" id="optionsRadios2"  value="F">女
+                                                            </label>
+                                                        {% else %}
+                                                            <label class="radio-inline">
+                                                                <input type="radio" name="sex" id="optionsRadios1" value="M" >男
+                                                            </label>
+                                                            <label class="radio-inline">
+                                                                <input type="radio" name="sex" id="optionsRadios2"  value="F" checked>女
+                                                            </label>
+                                                        {% endif %} 
+                                                    </div>    
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="id_tel" class="col-md-2 control-label">电话：</label>
+                                                    <div class="col-md-9">
+                                                        <input type="text" class="form-control" maxlength="18" name="tel" id="id_tel" value="{{ account.telephone }}">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="id_address" class="col-md-2 control-label">地址：</label>
+                                                    <div class="col-md-9">
+                                                        <input type="text" class="form-control" maxlength="50" name="address" id="id_address" value="{{ account.address }}">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="Bnum" class="col-md-3 control-label">每页显示书目数：</label>
+                                                    <div class="col-md-3">
+                                                        <input type="number" class="form-control" min="1" max="50" oninput="if(value.length>2)value=value.slice(0,2)"name="Bnum" id="Bnum" value="{{ account.BookNum }}">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="Rnum" class="col-md-3 control-label">每页显示记录数：</label>
+                                                    <div class="col-md-3">
+                                                        <input type="number" class="form-control" min="1" max="100" oninput="if(value.length>3)value=value.slice(0,3)" name="Rnum" id="Rnum" value="{{ account.RecordNum }}">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="Cnum" class="col-md-3 control-label">每页显示评论数：</label>
+                                                    <div class="col-md-3">
+                                                        <input type="number" class="form-control" min="1" max="50" oninput="if(value.length>2)value=value.slice(0,2)" name="Cnum" id="Cnum" value="{{ account.CommentNum }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                                <button type="submit" class="btn btn-primary">提交更改</button>
+                                            </div>
+                                        </form>
+                                    </div><!-- /.modal-content -->
+                                </div><!-- /.modal -->
+                            </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade in active " id="loan_record">
+                        <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="text-center">
+                                <h4 class="text-info">点击查看更多信息</h4>
+                            </div>
+                            <div class="col-md-10 col-md-offset-1">
+                            <table class="table table-bordered table-striped">
+                                <tr><td width="150">状态：</td><td>
+                                {% if user_state == "overdue" %}
+                                    <div class="text-danger">您有图书已超期</div>
+                                {% else %}
+                                    <div class="text-success">正常</div>
+                                {% endif %}
+                                </td></tr>
+                                <tr><td width="150">当前借阅信息：</td><td><a href="{% url 'borrow_record' %}">{{ borrow_num }}</a></td></tr>
+                                <tr><td width="150">借阅历史：</td><td><a href="{% url 'history_record' %}">{{ history_num }}</a></td></tr>
+                            </table>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="comment_list">
+                        <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="text-center">
+                                <h4 class="text-info">点击查看完整信息</h4>
+                            </div>
+                            <div class="col-md-10 col-md-offset-1">
+                            <table class="table table-bordered table-striped">     
+                                <tr><td width="150">我发表的评论数：</td><td><a href="{% url 'my_comments' %}">{{ comment_num }}</a></td></tr>
+                                <tr><td width="150">总赞同数：</td><td>{{ support_num }}</td></tr>
+                                <tr><td width="150">总反对数：</td><td>{{ oppose_num }}</td></tr>
+                            </table>
+                            </div> 
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    $(function () {
+                        $('#usertab li:eq(1) a').tab('show');
+                    });
+                </script>
+                </div>
+           </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block head %}
+<header class="jumbotron subhead" id="header-base">
+    <div class="container">
+        <h1>个人中心</h1>
+    </div>
+</header>
+{% endblock %}
